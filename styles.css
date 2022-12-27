@@ -1,0 +1,10 @@
+html{
+    font-family: "Arial", system-ui;
+}
+
+.vertical{
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+}
