@@ -1,9 +1,11 @@
 const default_date = '2018-04-01'
 const default_opacity = 0.9
 
-const region_poly = 'static/Regions.csv'
-const accidents_data = 'static/dtp2018_agg.csv'
-const accidents_json = 'static/dtp2018_agg.json'
+const url_ = 'https://raw.githubusercontent.com/Resurrectiontent/CarAccidents/master/'
+
+const region_poly = `${url_}static/Regions.csv`
+const accidents_data = `${url_}static/dtp2018_agg.csv`
+const accidents_json = `${url_}static/dtp2018_agg.json`
 const name2id_data = 'static/name2id.json'
 const id2name_data = 'static/id2name.json'
 const dat = 0
@@ -11,7 +13,10 @@ const dat_description = 'Amount of fatalities per day'
 
 const max_scores = [56, 14, 43, 97]
 
-accidents = JSON.parse(d)
+let accidents
+fetch(accidents_json)
+    .then((response) => response.json())
+    .then((json) => accidents = JSON.parse(json));
 
 
 const svg_map = d3
