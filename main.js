@@ -13,6 +13,13 @@ const dat_description = 'Amount of fatalities per day'
 
 const max_scores = [56, 14, 43, 97]
 
+let projection = d3.geoMercator()
+    .scale(300)
+    .translate([200, 800])
+
+let geoGenerator = d3.geoPath()
+    .projection(projection);
+
 let accidents = undefined
 fetch(accidents_json)
     .then((response) => response.json())
@@ -20,21 +27,22 @@ fetch(accidents_json)
 
 
 const svg_map = d3
-    .select(".div_map_slider")
+    .select("#cnt")
     .append("svg")
-    .attr("width", 800)
-    .attr("height", 400)
+    .attr("width", 1500)
+    .attr("height", 800)
     .append("g")
 
 svg_map.append("g")
-    // .attr("transform", "translate(555,30)")
+    .attr("transform", "translate(1000,30)")
     .append(() => Legend(
         d3.scaleSequential([0, max_scores[dat]], d3.interpolateReds), {
-            width: 250,
-            ticks: 15,
+            width: 500,
+            ticks: 10,
             title: dat_description,
-            tickFormat: "%"
         }))
+
+// const svg_map = svg_map1.append("g")
 
 
 draw_map(default_date)
@@ -47,14 +55,16 @@ function draw_map(date) {
             const reg_name = data.reg_name
             const relative = accidents[reg_name][date][dat] / max_scores[dat]
             const fill = d3.interpolateReds(relative)
-        let poly
-            poly = JSON.parse(data.poly)
-            svg_map
-                .append('polyline')
-                .attr('class', cls)
-                .style('fill', fill)
-                .text(reg_name)
-                .attr('points', poly)
+            const multipoly = JSON.parse(data.poly)
+            for (const poly of multipoly) {
+                // proj = projection(poly)
+                svg_map
+                    .append('polyline')
+                    .attr('class', cls)
+                    .text(reg_name)
+                    .style('fill', fill)
+                    .attr('points', projection(poly))
+            }
         }
         catch (ex){
             console.log(data)
@@ -63,14 +73,7 @@ function draw_map(date) {
             // if (data.type !== 'multipolygon') {
 
             // } else {
-            //     for (let i = 0; i < state_points.length; i += 1) {
-            //         svg_map
-            //             .append('polyline')
-            //             .attr('class', state_name)
-            //             .text(data.state)
-            //             .style('fill', red_fill)
-            //             .attr('points', state_points[i])
-            //     }
+            //
             // }
         svg_map.selectAll('polyline')
             .attr('stroke', 'grey')
@@ -82,5 +85,5 @@ function draw_map(date) {
     });
 
 // перемещение карты после отрисовки
-    svg_map.attr('transform', 'translate(-20,-25)')
+//     svg_map.attr('transform', 'translate(-20,-25)')
 }
