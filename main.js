@@ -13,10 +13,10 @@ const dat_description = 'Amount of fatalities per day'
 
 const max_scores = [56, 14, 43, 97]
 
-let accidents
+let accidents = undefined
 fetch(accidents_json)
     .then((response) => response.json())
-    .then((json) => accidents = JSON.parse(json));
+    .then((json) => accidents = json);
 
 
 const svg_map = d3
@@ -46,7 +46,14 @@ function draw_map(date) {
         const reg_name = data.reg_name
         const relative = accidents[reg_name][date][dat] / max_scores[dat]
         const fill = d3.interpolateReds(relative)
-        const poly = JSON.parse(data.poly)
+        let poly
+        try {
+            poly = JSON.parse(data.poly)
+        }
+        catch (ex){
+            console.log(data.poly)
+            throw ex
+        }
             // if (data.type !== 'multipolygon') {
                 svg_map
                     .append('polyline')
