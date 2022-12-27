@@ -1,4 +1,4 @@
-const default_date = '2018-04-01'
+const default_date = '2018-04-15'
 const default_opacity = 0.9
 
 const url_ = 'https://raw.githubusercontent.com/Resurrectiontent/CarAccidents/master/'
@@ -16,7 +16,7 @@ const max_scores = [56, 14, 43, 97]
 let accidents = undefined
 fetch(accidents_json)
     .then((response) => response.json())
-    .then((json) => accidents = json);
+    .then((json) => accidents = json)
 
 
 const svg_map = d3
@@ -24,7 +24,7 @@ const svg_map = d3
     .append("svg")
     .attr("width", 800)
     .attr("height", 400)
-    .append("g");
+    .append("g")
 
 svg_map.append("g")
     // .attr("transform", "translate(555,30)")
@@ -34,33 +34,34 @@ svg_map.append("g")
             ticks: 15,
             title: dat_description,
             tickFormat: "%"
-        }));
+        }))
 
 
 draw_map(default_date)
 
 function draw_map(date) {
     d3.csv(region_poly, function (data) {
-        const id = data.ind
-        const cls = `reg_${id}`
-        const reg_name = data.reg_name
-        const relative = accidents[reg_name][date][dat] / max_scores[dat]
-        const fill = d3.interpolateReds(relative)
-        let poly
         try {
+            const id = data.ind
+            const cls = `reg_${id}`
+            const reg_name = data.reg_name
+            const relative = accidents[reg_name][date][dat] / max_scores[dat]
+            const fill = d3.interpolateReds(relative)
+        let poly
             poly = JSON.parse(data.poly)
+            svg_map
+                .append('polyline')
+                .attr('class', cls)
+                .style('fill', fill)
+                .text(reg_name)
+                .attr('points', poly)
         }
         catch (ex){
-            console.log(data.poly)
+            console.log(data)
             throw ex
         }
             // if (data.type !== 'multipolygon') {
-                svg_map
-                    .append('polyline')
-                    .attr('class', cls)
-                    .style('fill', fill)
-                    .text(reg_name)
-                    .attr('points', poly)
+
             // } else {
             //     for (let i = 0; i < state_points.length; i += 1) {
             //         svg_map
