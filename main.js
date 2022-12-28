@@ -1,5 +1,6 @@
 const defaultDate = '2018-04-15'
 const defaultMonth = 4
+const defaultRegion = 'all'
 const defaultOpacity = 1
 const hoverOpacity = .65
 const hoverColor = '#7a7a7a'
@@ -32,9 +33,11 @@ let accidentsData = undefined
 fetch(accidentsMonthJson)
     .then((response) => response.json())
     .then((json) => accidentsMonthData = json)
+    .then((_) => drawMap(defaultMonth))
 fetch(accidentsJson)
     .then((response) => response.json())
     .then((json) => accidentsData = json)
+    .then((_) => drawHeatmap(defaultRegion))
 
 
 const dat = 0
@@ -42,18 +45,26 @@ const datDescription = 'Amount of fatalities per month'
 const maxScoreMonth = 490
 const maxScores = [56, 14, 43, 97]
 const allRegs = 'Russia total'
+const mapTitleText = 'Per-month car accident fatalities map'
+const heatmapTitleText = 'Per-day car accident fatalities heatmap'
 
-let projection = d3.geoMercator()
-    .scale(300)
-    .translate([150, 800])
+let projection = d3.geoEquirectangular()
+    .scale(500)
+    .translate([100, 750])
 
 d3.select('#cnt')
     .append('div')
     .attr('id', 'map_cnt')
+    .style('width', '100%')
+
+d3.select('#cnt')
+    .append('hr')
+    .style('width', '90%')
 
 d3.select('#cnt')
     .append('div')
     .attr('id', 'heatmap_cnt')
+    .style('width', '100%')
 
 const tooltip = d3
     .select('#map_cnt')
@@ -67,6 +78,11 @@ const tooltip = d3
     .style('border-color', 'black')
     .style('padding', '15px')
     .attr('id', 'tooltip')
+
+d3.select('#map_cnt')
+    .append('h2')
+    .attr('id', 'map_title')
+    .text(mapTitleText)
 
 const slider = d3
     .sliderHorizontal()
@@ -82,21 +98,26 @@ const slider = d3
 
 d3.select("#map_cnt")
     .append("svg")
-    .attr("width", 1100)
+    .attr("width", 700)
     .attr("height", 80)
+    .style('display', 'block')
+    .style('margin', 'auto')
     .append("g")
-    .attr("transform", "translate(500,25)")
+    .style('transform', 'translate(100px, 30px)')
     .call(slider);
 
 const svgMap = d3
     .select('#map_cnt')
     .append('svg')
-    .attr('width', 1500)
-    .attr('height', 800)
+    .attr('width', '100%')
+    .attr('height', 400)
     .append('g')
+    .attr('id', 'polygroup')
+    .style('display', 'block')
+    .style('margin', 'auto')
 
-svgMap.append('g')
-    .attr('transform', 'translate(1000,30)')
+d3.select("#map_cnt")
+    .append('g')
     .attr('id', 'legend')
     .append(() => Legend(
         d3.scaleSequential([0, maxScoreMonth], d3.interpolateReds), {
@@ -104,18 +125,22 @@ svgMap.append('g')
             ticks: 10,
             title: datDescription,
         }))
+    .style('display', 'block')
+    .style('margin', 'auto')
 
 const heatmapTitle = d3
     .select('#heatmap_cnt')
     .append('h2')
-    .text(allRegs)
+    .attr('id', 'heatmap_title')
 
 const svgHeatmap = d3
     .select('#heatmap_cnt')
     .append('svg')
-    .attr('width', 1500)
-    .attr('height', 300)
+    .attr('width', '100%')
+    .attr('height', 200)
     .append('g')
+    .style('display', 'block')
+    .style('margin', 'auto')
 
 
 function onmouseover(d) {
@@ -146,7 +171,7 @@ function onmousemove(d){
 }
 
 function drawMap(month) {
-    svgMap.selectAll().remove()
+    svgMap.selectAll('#polygroup').remove()
     d3.csv(regionPoly, function (data) {
         const id = data.ind
         const cls = `reg_${id}`
@@ -179,12 +204,59 @@ function drawMap(month) {
 }
 
 function drawHeatmap(d) {
-    const regName = this.getAttribute('reg-name')
-    if (heatmapTitle.nodeValue === regName)
-        heatmapTitle.text(allRegs)
-    else
-        heatmapTitle.text(regName)
+    const labelHeatmap = t => heatmapTitle.text(`${heatmapTitleText} - ${t}`)
 
+    svgHeatmap.selectAll('g').remove()
+    let data = undefined
+    if (d === 'all' || d3.select('#heatmap_title').text().endsWith(this.getAttribute('reg-name'))) {
+        data = accidentsData['all']
+        labelHeatmap(allRegs)
+    }
+    else {
+        const regName = this.getAttribute('reg-name')
+        data = accidentsData[regName]
+        labelHeatmap(regName)
+    }
+
+    const cellSize = 25
+    const formatDay = d => ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"][d.getUTCDay()]
+    const countDay = d => d.getUTCDay()
+    const timeWeek = d3.utcSunday
+    const max = Object.entries(data).reduce((a, b) => a[1] > b[1] ? a : b)[1]
+    d3.select('#heatmap_cnt')
+        .append('g')
+
+    for (const [key, _] of Object.entries(data).slice(0, 7)){
+        const date = new Date(key)
+        svgHeatmap
+            .append('text')
+            .attr("width", cellSize)
+            .attr("height", cellSize)
+            .attr("x", timeWeek.count(d3.utcYear(date), date) * cellSize + 10 - cellSize)
+            .attr("y", countDay(date) * cellSize + 0.5 - cellSize)
+            .text(formatDay(date))
+    }
+
+    for (const [key, value] of Object.entries(data)){
+        const date = new Date(key)
+        const fill = d3.interpolateReds(value / max)
+        svgHeatmap
+            .append('rect')
+            .attr("width", cellSize - 7)
+            .attr("height", cellSize - 7)
+            .attr("x", timeWeek.count(d3.utcYear(date), date) * cellSize + 10)
+            .attr("y", (countDay(date) * cellSize + 0.5))
+            .style('fill', fill)
+    }
+
+    d3.select('#heatmap_cnt').append('g')
+        .attr('id', 'legend')
+        .append(() => Legend(
+            d3.scaleSequential([0, max], d3.interpolateReds), {
+                width: 250,
+                ticks: 5,
+                title: datDescription,
+            }))
+        .style('display', 'block')
+        .style('margin', 'auto')
 }
-
-drawMap(defaultMonth)
