@@ -37,7 +37,7 @@ fetch(accidentsJson)
 
 
 const datDescription = 'Amount of fatalities per month'
-const hmDescription = 'Amount of fatalities per month'
+const hmDescription = 'Amount of fatalities per day'
 const allRegs = 'Russia total'
 const mapTitleText = 'Per-month car accident fatalities map'
 const heatmapTitleText = 'Per-day car accident fatalities heatmap'
