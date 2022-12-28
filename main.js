@@ -37,6 +37,7 @@ fetch(accidentsJson)
 
 
 const datDescription = 'Amount of fatalities per month'
+const hmDescription = 'Amount of fatalities per month'
 const allRegs = 'Russia total'
 const mapTitleText = 'Per-month car accident fatalities map'
 const heatmapTitleText = 'Per-day car accident fatalities heatmap'
@@ -199,7 +200,8 @@ function onmousemove_rect(d){
 }
 
 function drawMap(month) {
-    svgMap.selectAll('#polygroup').remove()
+    svgMap.selectAll('#polygroup')
+        .attr('class', 'old')
     d3.csv(regionPoly, function (data) {
         const id = data.ind
         const cls = `reg_${id}`
@@ -219,7 +221,9 @@ function drawMap(month) {
                 .style('fill', fill)
                 .attr('fill', fill)
                 .attr('points', poly.map(x => projection(x)))
+                .attr('id', 'polygroup')
         }
+        svgMap.selectAll('#polygroup.old').remove()
 
         svgMap.selectAll('polygon')
             .attr('stroke', defaultStroke)
