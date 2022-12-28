@@ -296,7 +296,7 @@ function drawHeatmap(d) {
             d3.scaleSequential([0, max], d3.interpolateReds), {
                 width: 250,
                 ticks: 5,
-                title: datDescription,
+                title: hmDescription,
             }))
         .style('display', 'block')
         .style('margin', 'auto')
