@@ -1,5 +1,14 @@
 html{
     font-family: "Arial", system-ui;
+    color: wheat;
+}
+body{
+    background-color: #313131;
+}
+
+#legend text{
+    font-family: "Arial Narrow", serif;
+    font-size: 14px;
 }
 
 .vertical{
