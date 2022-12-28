@@ -20,22 +20,28 @@ const getMonth = (i) => months[i.toString()]
 const url_ = 'https://raw.githubusercontent.com/Resurrectiontent/CarAccidents/master/'
 
 const regionPoly = `${url_}static/Regions.csv`
-const accidentsMonth = `${url_}static/dtp2018_agg_month.csv`
+// const accidentsMonth = `${url_}static/dtp2018_agg_month.csv`
 const accidentsMonthJson = `${url_}static/dtp2018_agg_month.json`
-const accidentsData = `${url_}static/dtp2018_agg.csv`
-const accidentsJson = `${url_}static/dtp2018_agg.json`
+// const accidents = `${url_}static/dtp2018_agg.csv`
+const accidentsJson = `${url_}static/dtp2018_agg0.json`
 // const name2id_data = `${url_}static/name2id.json`
 // const id2name_data = `${url_}static/id2name.json`
 
-let accidents = undefined
+let accidentsMonthData = undefined
+let accidentsData = undefined
 fetch(accidentsMonthJson)
     .then((response) => response.json())
-    .then((json) => accidents = json)
+    .then((json) => accidentsMonthData = json)
+fetch(accidentsJson)
+    .then((response) => response.json())
+    .then((json) => accidentsData = json)
+
 
 const dat = 0
 const datDescription = 'Amount of fatalities per month'
 const maxScoreMonth = 490
 const maxScores = [56, 14, 43, 97]
+const allRegs = 'Russia total'
 
 let projection = d3.geoMercator()
     .scale(300)
@@ -44,6 +50,10 @@ let projection = d3.geoMercator()
 d3.select('#cnt')
     .append('div')
     .attr('id', 'map_cnt')
+
+d3.select('#cnt')
+    .append('div')
+    .attr('id', 'heatmap_cnt')
 
 const tooltip = d3
     .select('#map_cnt')
@@ -66,17 +76,16 @@ const slider = d3
     .step(1)
     .ticks(9)
     .width(500)
-    .displayFormat(d3.format(".0f"))
-    .tickFormat(d3.format(".0f"))
+    .displayFormat(getMonth)
+    .tickFormat(getMonth)
     .on('onchange', (month) => drawMap(month))
 
-const slider_svg = d3
-    .select("#map_cnt")
+d3.select("#map_cnt")
     .append("svg")
     .attr("width", 1100)
     .attr("height", 80)
     .append("g")
-    .attr("transform", "translate(500,0)")
+    .attr("transform", "translate(500,25)")
     .call(slider);
 
 const svgMap = d3
@@ -95,6 +104,19 @@ svgMap.append('g')
             ticks: 10,
             title: datDescription,
         }))
+
+const heatmapTitle = d3
+    .select('#heatmap_cnt')
+    .append('h2')
+    .text(allRegs)
+
+const svgHeatmap = d3
+    .select('#heatmap_cnt')
+    .append('svg')
+    .attr('width', 1500)
+    .attr('height', 300)
+    .append('g')
+
 
 function onmouseover(d) {
     tooltip.style("visibility", "visible")
@@ -129,7 +151,7 @@ function drawMap(month) {
         const id = data.ind
         const cls = `reg_${id}`
         const regName = data.reg_name
-        const score = accidents[month.toString()][regName]
+        const score = accidentsMonthData[month.toString()][regName]
         const relative = score / maxScoreMonth
         const fill = d3.interpolateReds(relative)
         const multipoly = JSON.parse(data.poly)
@@ -152,8 +174,17 @@ function drawMap(month) {
             .on('mouseover', onmouseover)
             .on('mousemove', onmousemove)
             .on('mouseleave', onmouseleave)
-            // .on('click', state_click)
+            .on('click', drawHeatmap)
     });
+}
+
+function drawHeatmap(d) {
+    const regName = this.getAttribute('reg-name')
+    if (heatmapTitle.nodeValue === regName)
+        heatmapTitle.text(allRegs)
+    else
+        heatmapTitle.text(regName)
+
 }
 
 drawMap(defaultMonth)
